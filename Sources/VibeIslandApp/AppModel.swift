@@ -509,7 +509,7 @@ final class AppModel {
     }
 
     func showControlCenter() {
-        guard let window = NSApp.windows.first(where: { $0.title == "Vibe Island OSS" }) else {
+        guard let window = NSApp.windows.first(where: { $0.title == "Vibe Island Debug" }) else {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
@@ -521,6 +521,43 @@ final class AppModel {
 
     func toggleSoundMuted() {
         isSoundMuted.toggle()
+    }
+
+    func loadDebugSnapshot(
+        _ snapshot: IslandDebugSnapshot,
+        presentOverlay: Bool = false,
+        autoCollapseNotificationCards: Bool = false
+    ) {
+        notificationAutoCollapseTask?.cancel()
+        notificationAutoCollapseTask = nil
+        notificationSurfaceHasBeenHovered = false
+
+        state = SessionState(sessions: snapshot.sessions)
+        selectedSessionID = snapshot.selectedSessionID ?? snapshot.sessions.first?.id
+        islandSurface = snapshot.islandSurface
+        notchStatus = snapshot.notchStatus
+        notchOpenReason = snapshot.notchOpenReason
+        lastActionMessage = "Loaded debug scenario: \(snapshot.title)."
+
+        if autoCollapseNotificationCards {
+            updateNotificationAutoCollapse()
+        }
+
+        guard presentOverlay else {
+            return
+        }
+
+        switch snapshot.notchStatus {
+        case .opened:
+            overlayPlacementDiagnostics = overlayPanelController.show(
+                model: self,
+                preferredScreenID: preferredOverlayScreenID
+            )
+            overlayPanelController.setInteractive(true)
+        case .closed, .popping:
+            overlayPanelController.setInteractive(false)
+            refreshOverlayPlacement()
+        }
     }
 
     func notePointerInsideIslandSurface() {

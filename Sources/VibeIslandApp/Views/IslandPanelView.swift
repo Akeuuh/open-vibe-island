@@ -689,7 +689,10 @@ private struct IslandNotificationCard: View {
             return session.permissionRequest?.summary.trimmedForNotificationCard ?? "Approval needed"
         case .waitingForAnswer:
             return session.questionPrompt?.title.trimmedForNotificationCard ?? "Answer needed"
-        case .running, .completed:
+        case .completed:
+            return session.codexMetadata?.lastAssistantMessage?.trimmedForNotificationCard
+                ?? session.summary.trimmedForNotificationCard
+        case .running:
             return session.spotlightActivityLineText ?? session.summary
         }
     }

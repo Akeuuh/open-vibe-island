@@ -5,12 +5,13 @@ enum IslandSurface: Equatable {
     case sessionList
     case approvalCard(sessionID: String)
     case questionCard(sessionID: String)
+    case completionCard(sessionID: String)
 
     var sessionID: String? {
         switch self {
         case .sessionList:
             nil
-        case let .approvalCard(sessionID), let .questionCard(sessionID):
+        case let .approvalCard(sessionID), let .questionCard(sessionID), let .completionCard(sessionID):
             sessionID
         }
     }
@@ -19,7 +20,7 @@ enum IslandSurface: Equatable {
         switch self {
         case .sessionList:
             false
-        case .approvalCard, .questionCard:
+        case .approvalCard, .questionCard, .completionCard:
             true
         }
     }
@@ -30,6 +31,8 @@ enum IslandSurface: Equatable {
             .approvalCard(sessionID: payload.sessionID)
         case let .questionAsked(payload):
             .questionCard(sessionID: payload.sessionID)
+        case let .sessionCompleted(payload):
+            .completionCard(sessionID: payload.sessionID)
         default:
             nil
         }
@@ -47,6 +50,8 @@ enum IslandSurface: Equatable {
             return session.phase == .waitingForApproval && session.permissionRequest != nil
         case .questionCard:
             return session.phase == .waitingForAnswer && session.questionPrompt != nil
+        case .completionCard:
+            return session.phase == .completed
         }
     }
 }

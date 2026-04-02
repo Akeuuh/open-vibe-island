@@ -11,7 +11,7 @@ final class ControlCenterWindowController: NSWindowController, NSWindowDelegate 
             defer: false
         )
 
-        window.title = "Vibe Island OSS"
+        window.title = "Vibe Island Debug"
         window.center()
         window.minSize = NSSize(width: 940, height: 580)
         window.setContentSize(NSSize(width: 980, height: 640))

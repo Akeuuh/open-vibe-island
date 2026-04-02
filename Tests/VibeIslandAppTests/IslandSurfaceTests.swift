@@ -57,4 +57,17 @@ struct IslandSurfaceTests {
         #expect(IslandSurface.approvalCard(sessionID: "session-1").matchesCurrentState(of: session))
         #expect(!IslandSurface.questionCard(sessionID: "session-1").matchesCurrentState(of: session))
     }
+
+    @Test
+    func completionEventsRouteToCompletionCard() {
+        let event = AgentEvent.sessionCompleted(
+            SessionCompleted(
+                sessionID: "session-3",
+                summary: "Finished task",
+                timestamp: .now
+            )
+        )
+
+        #expect(IslandSurface.notificationSurface(for: event) == .completionCard(sessionID: "session-3"))
+    }
 }

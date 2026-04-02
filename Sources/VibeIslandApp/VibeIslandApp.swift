@@ -34,7 +34,7 @@ struct VibeIslandApp: App {
     private var appDelegate
 
     var body: some Scene {
-        WindowGroup("Vibe Island OSS") {
+        WindowGroup("Vibe Island Debug") {
             ControlCenterView(model: appDelegate.model)
         }
 
