@@ -37,6 +37,11 @@ Keep all work incremental, reviewable, and reversible. Every meaningful round of
 - Add documentation when making architectural or workflow decisions.
 - Prefer native macOS and Swift-friendly project structure for this repository.
 
+## Reproduction Scope
+
+- Reproduction work is currently limited to these four surfaces only: `claude code`, `codex`, `terminal`, and `ghostty`.
+- Do not broaden the reproduction scope to other tools, runtimes, platforms, or environments unless the user explicitly asks to expand it.
+
 ## Verification
 
 - Run targeted checks that match the change.
