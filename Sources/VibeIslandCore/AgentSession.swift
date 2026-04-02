@@ -57,7 +57,7 @@ public enum SessionPhase: String, Codable, Sendable {
     }
 }
 
-public struct JumpTarget: Equatable, Sendable {
+public struct JumpTarget: Equatable, Codable, Sendable {
     public var terminalApp: String
     public var workspaceName: String
     public var paneTitle: String
@@ -69,7 +69,7 @@ public struct JumpTarget: Equatable, Sendable {
     }
 }
 
-public struct PermissionRequest: Equatable, Identifiable, Sendable {
+public struct PermissionRequest: Equatable, Identifiable, Codable, Sendable {
     public var id: UUID
     public var title: String
     public var summary: String
@@ -94,7 +94,7 @@ public struct PermissionRequest: Equatable, Identifiable, Sendable {
     }
 }
 
-public struct QuestionPrompt: Equatable, Identifiable, Sendable {
+public struct QuestionPrompt: Equatable, Identifiable, Codable, Sendable {
     public var id: UUID
     public var title: String
     public var options: [String]
@@ -110,7 +110,7 @@ public struct QuestionPrompt: Equatable, Identifiable, Sendable {
     }
 }
 
-public struct AgentSession: Equatable, Identifiable, Sendable {
+public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
     public var id: String
     public var title: String
     public var tool: AgentTool

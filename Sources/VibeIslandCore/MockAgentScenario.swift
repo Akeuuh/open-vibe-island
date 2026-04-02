@@ -111,27 +111,6 @@ public enum MockAgentScenario {
                     )
                 )
             ),
-            ScheduledAgentEvent(
-                delay: 18,
-                event: .activityUpdated(
-                    SessionActivityUpdated(
-                        sessionID: "claude-fix-auth-bug",
-                        summary: "Patch is ready. Waiting to continue after approval.",
-                        phase: .waitingForApproval,
-                        timestamp: referenceDate.addingTimeInterval(18)
-                    )
-                )
-            ),
-            ScheduledAgentEvent(
-                delay: 24,
-                event: .sessionCompleted(
-                    SessionCompleted(
-                        sessionID: "gemini-optimize-queries",
-                        summary: "Slow query analysis finished with index recommendations.",
-                        timestamp: referenceDate.addingTimeInterval(24)
-                    )
-                )
-            ),
         ]
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SessionStarted: Equatable, Sendable {
+public struct SessionStarted: Equatable, Codable, Sendable {
     public var sessionID: String
     public var title: String
     public var tool: AgentTool
@@ -25,7 +25,7 @@ public struct SessionStarted: Equatable, Sendable {
     }
 }
 
-public struct SessionActivityUpdated: Equatable, Sendable {
+public struct SessionActivityUpdated: Equatable, Codable, Sendable {
     public var sessionID: String
     public var summary: String
     public var phase: SessionPhase
@@ -44,7 +44,7 @@ public struct SessionActivityUpdated: Equatable, Sendable {
     }
 }
 
-public struct PermissionRequested: Equatable, Sendable {
+public struct PermissionRequested: Equatable, Codable, Sendable {
     public var sessionID: String
     public var request: PermissionRequest
     public var timestamp: Date
@@ -60,7 +60,7 @@ public struct PermissionRequested: Equatable, Sendable {
     }
 }
 
-public struct QuestionAsked: Equatable, Sendable {
+public struct QuestionAsked: Equatable, Codable, Sendable {
     public var sessionID: String
     public var prompt: QuestionPrompt
     public var timestamp: Date
@@ -76,7 +76,7 @@ public struct QuestionAsked: Equatable, Sendable {
     }
 }
 
-public struct SessionCompleted: Equatable, Sendable {
+public struct SessionCompleted: Equatable, Codable, Sendable {
     public var sessionID: String
     public var summary: String
     public var timestamp: Date
@@ -92,7 +92,7 @@ public struct SessionCompleted: Equatable, Sendable {
     }
 }
 
-public struct JumpTargetUpdated: Equatable, Sendable {
+public struct JumpTargetUpdated: Equatable, Codable, Sendable {
     public var sessionID: String
     public var jumpTarget: JumpTarget
     public var timestamp: Date
@@ -108,13 +108,77 @@ public struct JumpTargetUpdated: Equatable, Sendable {
     }
 }
 
-public enum AgentEvent: Equatable, Sendable {
+public enum AgentEvent: Equatable, Codable, Sendable {
     case sessionStarted(SessionStarted)
     case activityUpdated(SessionActivityUpdated)
     case permissionRequested(PermissionRequested)
     case questionAsked(QuestionAsked)
     case sessionCompleted(SessionCompleted)
     case jumpTargetUpdated(JumpTargetUpdated)
+
+    private enum CodingKeys: String, CodingKey {
+        case type
+        case sessionStarted
+        case activityUpdated
+        case permissionRequested
+        case questionAsked
+        case sessionCompleted
+        case jumpTargetUpdated
+    }
+
+    private enum EventType: String, Codable {
+        case sessionStarted
+        case activityUpdated
+        case permissionRequested
+        case questionAsked
+        case sessionCompleted
+        case jumpTargetUpdated
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try container.decode(EventType.self, forKey: .type)
+
+        switch type {
+        case .sessionStarted:
+            self = .sessionStarted(try container.decode(SessionStarted.self, forKey: .sessionStarted))
+        case .activityUpdated:
+            self = .activityUpdated(try container.decode(SessionActivityUpdated.self, forKey: .activityUpdated))
+        case .permissionRequested:
+            self = .permissionRequested(try container.decode(PermissionRequested.self, forKey: .permissionRequested))
+        case .questionAsked:
+            self = .questionAsked(try container.decode(QuestionAsked.self, forKey: .questionAsked))
+        case .sessionCompleted:
+            self = .sessionCompleted(try container.decode(SessionCompleted.self, forKey: .sessionCompleted))
+        case .jumpTargetUpdated:
+            self = .jumpTargetUpdated(try container.decode(JumpTargetUpdated.self, forKey: .jumpTargetUpdated))
+        }
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        switch self {
+        case let .sessionStarted(payload):
+            try container.encode(EventType.sessionStarted, forKey: .type)
+            try container.encode(payload, forKey: .sessionStarted)
+        case let .activityUpdated(payload):
+            try container.encode(EventType.activityUpdated, forKey: .type)
+            try container.encode(payload, forKey: .activityUpdated)
+        case let .permissionRequested(payload):
+            try container.encode(EventType.permissionRequested, forKey: .type)
+            try container.encode(payload, forKey: .permissionRequested)
+        case let .questionAsked(payload):
+            try container.encode(EventType.questionAsked, forKey: .type)
+            try container.encode(payload, forKey: .questionAsked)
+        case let .sessionCompleted(payload):
+            try container.encode(EventType.sessionCompleted, forKey: .type)
+            try container.encode(payload, forKey: .sessionCompleted)
+        case let .jumpTargetUpdated(payload):
+            try container.encode(EventType.jumpTargetUpdated, forKey: .type)
+            try container.encode(payload, forKey: .jumpTargetUpdated)
+        }
+    }
 }
 
 public struct ScheduledAgentEvent: Equatable, Sendable {

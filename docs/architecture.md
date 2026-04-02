@@ -31,6 +31,10 @@ Each event should carry a stable session identifier, tool name, timestamps, and 
 - Unix domain sockets or local stream IPC for app and bridge communication
 - JSON event envelopes for debugging and adapter simplicity
 
+## Current Demo Slice
+
+The current scaffold keeps the bridge server inside the app process for convenience, but the app still talks to it over a Unix socket with newline-delimited JSON envelopes. That means the protocol and transport boundary are already real even though the helper has not been split into a separate process yet.
+
 ## Suggested Build Order
 
 1. Define the shared event schema

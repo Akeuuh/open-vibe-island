@@ -10,6 +10,7 @@ Initial native scaffold is in place. The repository now contains a buildable mac
 
 - `VibeIslandCore` for shared event and session state logic
 - `VibeIslandApp` for the SwiftUI and AppKit shell
+- a demo Unix-socket bridge transport between the app and a local event source
 - core tests for session state transitions
 
 ## Product Direction
@@ -36,10 +37,13 @@ open Package.swift
 
 Open the package in Xcode to run the macOS app target with the preview overlay and mock event stream.
 
+The app now boots a demo bridge on a local Unix socket under `/tmp` and consumes session events through the same transport shape we can later reuse for real CLI adapters.
+
 ## Repository Layout
 
 - `Package.swift` Swift package entry point for the app and shared core module.
 - `Sources/VibeIslandCore` Shared models, events, mock scenario, and session state reducer.
+- `Sources/VibeIslandCore` also contains the wire protocol, local socket client, and demo bridge server.
 - `Sources/VibeIslandApp` SwiftUI app shell, menu bar entry, and overlay panel controller.
 - `Tests/VibeIslandCoreTests` Core logic tests.
 - `docs/product.md` Product scope, MVP boundary, and roadmap.

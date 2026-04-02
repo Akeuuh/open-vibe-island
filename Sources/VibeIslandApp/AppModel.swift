@@ -9,13 +9,19 @@ final class AppModel {
     var state = SessionState()
     var selectedSessionID: String?
     var isOverlayVisible = false
-    var lastActionMessage = "No interaction yet."
+    var lastActionMessage = "Connecting to local bridge..."
 
     @ObservationIgnored
     private var bridgeTask: Task<Void, Never>?
 
     @ObservationIgnored
     private let overlayPanelController = OverlayPanelController()
+
+    @ObservationIgnored
+    private let bridgeServer = DemoBridgeServer()
+
+    @ObservationIgnored
+    private let bridgeClient = LocalBridgeClient()
 
     var sessions: [AgentSession] {
         state.sessions
@@ -30,43 +36,38 @@ final class AppModel {
             return
         }
 
-        resetDemo()
-        bridgeTask = Task { [weak self] in
-            guard let self else {
-                return
-            }
+        do {
+            try bridgeServer.start()
+            let stream = try bridgeClient.connect()
 
-            while !Task.isCancelled {
-                for scheduledEvent in MockAgentScenario.timeline(referenceDate: .now) {
-                    let sleepNanoseconds = UInt64(scheduledEvent.delay * 1_000_000_000)
-                    try? await Task.sleep(nanoseconds: sleepNanoseconds)
-
-                    guard !Task.isCancelled else {
-                        return
-                    }
-
-                    self.state.apply(scheduledEvent.event)
-
-                    if let activeAction = self.state.activeActionableSession {
-                        self.selectedSessionID = activeAction.id
-                    }
-                }
-
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                guard !Task.isCancelled else {
+            bridgeTask = Task { [weak self] in
+                guard let self else {
                     return
                 }
 
-                self.resetDemo()
+                do {
+                    for try await event in stream {
+                        self.state.apply(event)
+
+                        if self.selectedSessionID == nil || self.state.session(id: self.selectedSessionID) == nil {
+                            self.selectedSessionID = self.state.activeActionableSession?.id ?? self.state.sessions.first?.id
+                        } else if let activeAction = self.state.activeActionableSession {
+                            self.selectedSessionID = activeAction.id
+                        }
+
+                        self.lastActionMessage = self.describe(event)
+                    }
+                } catch {
+                    self.lastActionMessage = "Bridge disconnected: \(error.localizedDescription)"
+                }
             }
+        } catch {
+            lastActionMessage = "Failed to start local bridge: \(error.localizedDescription)"
         }
     }
 
     func resetDemo() {
-        state = SessionState()
-        MockAgentScenario.initialEvents.forEach { state.apply($0) }
-        selectedSessionID = state.activeActionableSession?.id ?? state.sessions.first?.id
-        lastActionMessage = "Demo reset."
+        send(.resetDemo, userMessage: "Resetting bridge demo state.")
     }
 
     func select(sessionID: String) {
@@ -88,10 +89,12 @@ final class AppModel {
             return
         }
 
-        state.resolvePermission(sessionID: session.id, approved: approved)
-        lastActionMessage = approved
-            ? "Approved permission for \(session.title)."
-            : "Denied permission for \(session.title)."
+        send(
+            .resolvePermission(sessionID: session.id, approved: approved),
+            userMessage: approved
+                ? "Approving permission for \(session.title)."
+                : "Denying permission for \(session.title)."
+        )
     }
 
     func answerFocusedQuestion(_ answer: String) {
@@ -99,8 +102,10 @@ final class AppModel {
             return
         }
 
-        state.answerQuestion(sessionID: session.id, answer: answer)
-        lastActionMessage = "Answered \(session.title) with \"\(answer)\"."
+        send(
+            .answerQuestion(sessionID: session.id, answer: answer),
+            userMessage: "Sending answer \"\(answer)\" for \(session.title)."
+        )
     }
 
     func jumpToFocusedSession() {
@@ -111,5 +116,38 @@ final class AppModel {
 
         lastActionMessage = "Jump target: \(jumpTarget.terminalApp) · \(jumpTarget.workspaceName) · \(jumpTarget.paneTitle)"
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func send(_ command: BridgeCommand, userMessage: String) {
+        lastActionMessage = userMessage
+
+        Task { [weak self] in
+            guard let self else {
+                return
+            }
+
+            do {
+                try await self.bridgeClient.send(command)
+            } catch {
+                self.lastActionMessage = "Failed to send bridge command: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func describe(_ event: AgentEvent) -> String {
+        switch event {
+        case let .sessionStarted(payload):
+            "Session started: \(payload.title)"
+        case let .activityUpdated(payload):
+            payload.summary
+        case let .permissionRequested(payload):
+            payload.request.summary
+        case let .questionAsked(payload):
+            payload.prompt.title
+        case let .sessionCompleted(payload):
+            payload.summary
+        case let .jumpTargetUpdated(payload):
+            "Jump target updated to \(payload.jumpTarget.terminalApp)."
+        }
     }
 }
