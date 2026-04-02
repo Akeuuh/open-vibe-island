@@ -15,61 +15,58 @@ struct ControlCenterView: View {
     }
 
     private var sessionColumn: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Vibe Island OSS")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                Text("Native macOS scaffold for monitoring, approvals, and jump-back flows.")
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 12) {
-                summaryCard(title: "Running", value: model.state.runningCount, tint: .mint)
-                summaryCard(title: "Attention", value: model.state.attentionCount, tint: .orange)
-                summaryCard(title: "Completed", value: model.state.completedCount, tint: .blue)
-            }
-
-            HStack(spacing: 12) {
-                Button(model.isOverlayVisible ? "Hide Island" : "Show Island") {
-                    model.toggleOverlay()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Vibe Island OSS")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                    Text("Native macOS scaffold for monitoring, approvals, and jump-back flows.")
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.borderedProminent)
 
-                Button("Load Demo Sessions") {
-                    model.resetDemo()
+                HStack(spacing: 12) {
+                    summaryCard(title: "Running", value: model.state.runningCount, tint: .mint)
+                    summaryCard(title: "Attention", value: model.state.attentionCount, tint: .orange)
+                    summaryCard(title: "Completed", value: model.state.completedCount, tint: .blue)
                 }
-                .buttonStyle(.bordered)
-            }
 
-            acceptanceCard
-            setupCard
+                HStack(spacing: 12) {
+                    Button(model.isOverlayVisible ? "Hide Island" : "Show Island") {
+                        model.toggleOverlay()
+                    }
+                    .buttonStyle(.borderedProminent)
 
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Sessions")
-                    .font(.headline)
-                List {
-                    ForEach(model.sessions) { session in
-                        Button {
-                            model.select(sessionID: session.id)
-                        } label: {
-                            SessionRowView(
-                                session: session,
-                                isSelected: session.id == model.focusedSession?.id
-                            )
+                    Button("Load Demo Sessions") {
+                        model.resetDemo()
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                acceptanceCard
+                setupCard
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Sessions")
+                        .font(.headline)
+
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        ForEach(model.sessions) { session in
+                            Button {
+                                model.select(sessionID: session.id)
+                            } label: {
+                                SessionRowView(
+                                    session: session,
+                                    isSelected: session.id == model.focusedSession?.id
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
                     }
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .background(Color.clear)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        .scrollIndicators(.visible)
+        .padding(.trailing, 6)
         .frame(maxWidth: 360, maxHeight: .infinity, alignment: .topLeading)
     }
 
