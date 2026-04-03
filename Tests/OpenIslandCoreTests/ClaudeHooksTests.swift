@@ -29,21 +29,32 @@ struct ClaudeHooksTests {
         let rootURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("open-island-claude-hooks-\(UUID().uuidString)", isDirectory: true)
         let claudeDirectory = rootURL.appendingPathComponent(".claude", isDirectory: true)
-        let manager = ClaudeHookInstallationManager(claudeDirectory: claudeDirectory)
-        let hooksBinaryURL = rootURL.appendingPathComponent("OpenIslandHooks")
+        let managedHooksBinaryURL = rootURL
+            .appendingPathComponent("managed", isDirectory: true)
+            .appendingPathComponent("OpenIslandHooks")
+        let manager = ClaudeHookInstallationManager(
+            claudeDirectory: claudeDirectory,
+            managedHooksBinaryURL: managedHooksBinaryURL
+        )
+        let hooksBinaryURL = rootURL
+            .appendingPathComponent("build", isDirectory: true)
+            .appendingPathComponent("VibeIslandHooks")
 
         defer {
             try? FileManager.default.removeItem(at: rootURL)
         }
 
-        try FileManager.default.createDirectory(at: rootURL, withIntermediateDirectories: true)
-        try Data().write(to: hooksBinaryURL)
+        try FileManager.default.createDirectory(at: hooksBinaryURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("claude-hook".utf8).write(to: hooksBinaryURL)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: hooksBinaryURL.path)
 
         let installed = try manager.install(hooksBinaryURL: hooksBinaryURL)
         #expect(installed.managedHooksPresent)
-        #expect(installed.manifest?.hookCommand == ClaudeHookInstaller.hookCommand(for: hooksBinaryURL.path))
+        #expect(installed.hooksBinaryURL?.path == managedHooksBinaryURL.standardizedFileURL.path)
+        #expect(installed.manifest?.hookCommand == ClaudeHookInstaller.hookCommand(for: managedHooksBinaryURL.path))
         #expect(!installed.hasClaudeIslandHooks)
+        #expect(FileManager.default.isExecutableFile(atPath: managedHooksBinaryURL.path))
+        #expect(try Data(contentsOf: managedHooksBinaryURL) == Data("claude-hook".utf8))
 
         let settingsObject = try jsonObject(from: Data(contentsOf: installed.settingsURL))
         let hooksObject = settingsObject["hooks"] as? [String: Any]
@@ -51,8 +62,11 @@ struct ClaudeHooksTests {
         #expect(hooksObject?["PreToolUse"] != nil)
         #expect(hooksObject?["UserPromptSubmit"] != nil)
 
-        let reloaded = try manager.status(hooksBinaryURL: hooksBinaryURL)
+        try FileManager.default.removeItem(at: hooksBinaryURL)
+
+        let reloaded = try manager.status()
         #expect(reloaded.managedHooksPresent)
+        #expect(reloaded.hooksBinaryURL?.path == managedHooksBinaryURL.standardizedFileURL.path)
 
         let uninstalled = try manager.uninstall()
         #expect(!uninstalled.managedHooksPresent)

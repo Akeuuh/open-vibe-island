@@ -30,23 +30,27 @@ public struct ClaudeHookInstallationStatus: Equatable, Sendable {
 
 public final class ClaudeHookInstallationManager: @unchecked Sendable {
     public let claudeDirectory: URL
+    public let managedHooksBinaryURL: URL
     private let fileManager: FileManager
 
     public init(
         claudeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude", isDirectory: true),
+        managedHooksBinaryURL: URL = ManagedHooksBinary.defaultURL(),
         fileManager: FileManager = .default
     ) {
         self.claudeDirectory = claudeDirectory
+        self.managedHooksBinaryURL = managedHooksBinaryURL.standardizedFileURL
         self.fileManager = fileManager
     }
 
     public func status(hooksBinaryURL: URL? = nil) throws -> ClaudeHookInstallationStatus {
         let settingsURL = claudeDirectory.appendingPathComponent("settings.json")
         let manifestURL = resolvedManifestURL()
+        let resolvedHooksBinaryURL = resolvedHooksBinaryURL(explicitURL: hooksBinaryURL)
 
         let settingsData = try? Data(contentsOf: settingsURL)
         let manifest = try loadManifest(at: manifestURL)
-        let managedCommand = manifest?.hookCommand ?? hooksBinaryURL.map { ClaudeHookInstaller.hookCommand(for: $0.path) }
+        let managedCommand = manifest?.hookCommand ?? resolvedHooksBinaryURL.map { ClaudeHookInstaller.hookCommand(for: $0.path) }
         let uninstallMutation = try ClaudeHookInstaller.uninstallSettingsJSON(
             existingData: settingsData,
             managedCommand: managedCommand
@@ -56,7 +60,7 @@ public final class ClaudeHookInstallationManager: @unchecked Sendable {
             claudeDirectory: claudeDirectory,
             settingsURL: settingsURL,
             manifestURL: manifestURL,
-            hooksBinaryURL: hooksBinaryURL,
+            hooksBinaryURL: resolvedHooksBinaryURL,
             managedHooksPresent: uninstallMutation.changed,
             hasClaudeIslandHooks: uninstallMutation.hasClaudeIslandHooks,
             manifest: manifest
@@ -71,7 +75,12 @@ public final class ClaudeHookInstallationManager: @unchecked Sendable {
         let manifestURL = claudeDirectory.appendingPathComponent(ClaudeHookInstallerManifest.fileName)
         let legacyManifestURL = claudeDirectory.appendingPathComponent(ClaudeHookInstallerManifest.legacyFileName)
         let existingSettings = try? Data(contentsOf: settingsURL)
-        let command = ClaudeHookInstaller.hookCommand(for: hooksBinaryURL.path)
+        let installedHooksBinaryURL = try ManagedHooksBinary.install(
+            from: hooksBinaryURL,
+            to: managedHooksBinaryURL,
+            fileManager: fileManager
+        )
+        let command = ClaudeHookInstaller.hookCommand(for: installedHooksBinaryURL.path)
         let mutation = try ClaudeHookInstaller.installSettingsJSON(
             existingData: existingSettings,
             hookCommand: command
@@ -94,7 +103,7 @@ public final class ClaudeHookInstallationManager: @unchecked Sendable {
             try fileManager.removeItem(at: legacyManifestURL)
         }
 
-        return try status(hooksBinaryURL: hooksBinaryURL)
+        return try status(hooksBinaryURL: installedHooksBinaryURL)
     }
 
     @discardableResult
@@ -146,6 +155,18 @@ public final class ClaudeHookInstallationManager: @unchecked Sendable {
 
         let legacyURL = claudeDirectory.appendingPathComponent(ClaudeHookInstallerManifest.legacyFileName)
         return fileManager.fileExists(atPath: legacyURL.path) ? legacyURL : primaryURL
+    }
+
+    private func resolvedHooksBinaryURL(explicitURL: URL?) -> URL? {
+        if let explicitURL {
+            return explicitURL.standardizedFileURL
+        }
+
+        guard fileManager.isExecutableFile(atPath: managedHooksBinaryURL.path) else {
+            return nil
+        }
+
+        return managedHooksBinaryURL
     }
 
     private func backupFile(at url: URL) throws {

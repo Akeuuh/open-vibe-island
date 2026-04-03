@@ -76,9 +76,7 @@ private struct SetupCommand {
         }
 
         if (action == .install || action == .installClaude), hooksBinary == nil {
-            hooksBinary = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-                .appendingPathComponent(".build/release/OpenIslandHooks")
-                .standardizedFileURL
+            hooksBinary = HooksBinaryLocator.locate()
         }
 
         self.codexDirectory = codexDirectory

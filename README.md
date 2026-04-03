@@ -76,7 +76,7 @@ Connect Codex:
 
 Open the package in Xcode to run the macOS app target. On launch, the app restores its local cache, scans recent `~/.codex/sessions/**/rollout-*.jsonl` files for existing Codex sessions, and then starts the live bridge for new hook events.
 
-The control center also shows live Codex hook install status from `~/.codex`, and can install or uninstall the managed hook entries directly if it can locate a local `OpenIslandHooks` executable. Claude usage setup is available from the app and remains opt-in.
+The control center also shows live Codex hook install status from `~/.codex`, and can install or uninstall the managed hook entries directly if it can locate a local `OpenIslandHooks` executable. Installs copy the helper into `~/Library/Application Support/OpenIsland/bin/OpenIslandHooks` so repo or worktree renames do not break existing hooks. Claude usage setup is available from the app and remains opt-in.
 
 ```toml
 [features]
@@ -85,7 +85,7 @@ codex_hooks = true
 
 ```bash
 swift build -c release --product OpenIslandHooks
-swift run OpenIslandSetup install --hooks-binary "$(pwd)/.build/release/OpenIslandHooks"
+swift run OpenIslandSetup install
 ```
 
 That setup enables `codex_hooks = true` and installs a low-noise hook set matching the original app's Codex integration: `SessionStart`, `UserPromptSubmit`, and `Stop`.
@@ -93,7 +93,7 @@ That setup enables `codex_hooks = true` and installs a low-noise hook set matchi
 Check or remove the setup later:
 
 ```bash
-swift run OpenIslandSetup status --hooks-binary "$(pwd)/.build/release/OpenIslandHooks"
+swift run OpenIslandSetup status
 swift run OpenIslandSetup uninstall
 ```
 

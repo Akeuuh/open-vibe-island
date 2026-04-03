@@ -33,13 +33,16 @@ public struct CodexHookInstallationStatus: Equatable, Sendable {
 
 public final class CodexHookInstallationManager: @unchecked Sendable {
     public let codexDirectory: URL
+    public let managedHooksBinaryURL: URL
     private let fileManager: FileManager
 
     public init(
         codexDirectory: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex", isDirectory: true),
+        managedHooksBinaryURL: URL = ManagedHooksBinary.defaultURL(),
         fileManager: FileManager = .default
     ) {
         self.codexDirectory = codexDirectory
+        self.managedHooksBinaryURL = managedHooksBinaryURL.standardizedFileURL
         self.fileManager = fileManager
     }
 
@@ -47,11 +50,12 @@ public final class CodexHookInstallationManager: @unchecked Sendable {
         let configURL = codexDirectory.appendingPathComponent("config.toml")
         let hooksURL = codexDirectory.appendingPathComponent("hooks.json")
         let manifestURL = resolvedManifestURL()
+        let resolvedHooksBinaryURL = resolvedHooksBinaryURL(explicitURL: hooksBinaryURL)
 
         let configContents = (try? String(contentsOf: configURL, encoding: .utf8)) ?? ""
         let hooksData = try? Data(contentsOf: hooksURL)
         let manifest = try loadManifest(at: manifestURL)
-        let managedCommand = manifest?.hookCommand ?? hooksBinaryURL.map { CodexHookInstaller.hookCommand(for: $0.path) }
+        let managedCommand = manifest?.hookCommand ?? resolvedHooksBinaryURL.map { CodexHookInstaller.hookCommand(for: $0.path) }
         let managedHooksPresent = ((try? CodexHookInstaller.uninstallHooksJSON(
             existingData: hooksData,
             managedCommand: managedCommand
@@ -62,7 +66,7 @@ public final class CodexHookInstallationManager: @unchecked Sendable {
             configURL: configURL,
             hooksURL: hooksURL,
             manifestURL: manifestURL,
-            hooksBinaryURL: hooksBinaryURL,
+            hooksBinaryURL: resolvedHooksBinaryURL,
             featureFlagEnabled: configContents.contains("codex_hooks = true"),
             managedHooksPresent: managedHooksPresent,
             manifest: manifest
@@ -80,8 +84,13 @@ public final class CodexHookInstallationManager: @unchecked Sendable {
 
         let existingConfig = (try? String(contentsOf: configURL, encoding: .utf8)) ?? ""
         let existingHooks = try? Data(contentsOf: hooksURL)
+        let installedHooksBinaryURL = try ManagedHooksBinary.install(
+            from: hooksBinaryURL,
+            to: managedHooksBinaryURL,
+            fileManager: fileManager
+        )
 
-        let command = CodexHookInstaller.hookCommand(for: hooksBinaryURL.path)
+        let command = CodexHookInstaller.hookCommand(for: installedHooksBinaryURL.path)
         let featureMutation = CodexHookInstaller.enableCodexHooksFeature(in: existingConfig)
         let hooksMutation = try CodexHookInstaller.installHooksJSON(existingData: existingHooks, hookCommand: command)
 
@@ -109,7 +118,7 @@ public final class CodexHookInstallationManager: @unchecked Sendable {
             try fileManager.removeItem(at: legacyManifestURL)
         }
 
-        return try status(hooksBinaryURL: hooksBinaryURL)
+        return try status(hooksBinaryURL: installedHooksBinaryURL)
     }
 
     @discardableResult
@@ -175,6 +184,18 @@ public final class CodexHookInstallationManager: @unchecked Sendable {
 
         let legacyURL = codexDirectory.appendingPathComponent(CodexHookInstallerManifest.legacyFileName)
         return fileManager.fileExists(atPath: legacyURL.path) ? legacyURL : primaryURL
+    }
+
+    private func resolvedHooksBinaryURL(explicitURL: URL?) -> URL? {
+        if let explicitURL {
+            return explicitURL.standardizedFileURL
+        }
+
+        guard fileManager.isExecutableFile(atPath: managedHooksBinaryURL.path) else {
+            return nil
+        }
+
+        return managedHooksBinaryURL
     }
 
     private func backupFile(at url: URL) throws {

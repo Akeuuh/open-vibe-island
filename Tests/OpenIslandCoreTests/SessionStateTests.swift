@@ -672,35 +672,54 @@ struct SessionStateTests {
 
     @Test
     func codexHookInstallationManagerRoundTripsInstallAndUninstall() throws {
-        let codexDirectory = FileManager.default.temporaryDirectory
+        let rootURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("open-island-tests-\(UUID().uuidString)", isDirectory: true)
-        let manager = CodexHookInstallationManager(codexDirectory: codexDirectory)
-        let hooksBinaryURL = codexDirectory.appendingPathComponent("OpenIslandHooks")
+        let codexDirectory = rootURL.appendingPathComponent(".codex", isDirectory: true)
+        let managedHooksBinaryURL = rootURL
+            .appendingPathComponent("managed", isDirectory: true)
+            .appendingPathComponent("OpenIslandHooks")
+        let manager = CodexHookInstallationManager(
+            codexDirectory: codexDirectory,
+            managedHooksBinaryURL: managedHooksBinaryURL
+        )
+        let hooksBinaryURL = rootURL
+            .appendingPathComponent("build", isDirectory: true)
+            .appendingPathComponent("VibeIslandHooks")
 
         try FileManager.default.createDirectory(at: codexDirectory, withIntermediateDirectories: true)
-        try Data().write(to: hooksBinaryURL)
+        try FileManager.default.createDirectory(
+            at: hooksBinaryURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try Data("codex-hook".utf8).write(to: hooksBinaryURL)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: hooksBinaryURL.path)
 
         defer {
-            try? FileManager.default.removeItem(at: codexDirectory)
+            try? FileManager.default.removeItem(at: rootURL)
         }
 
         let installed = try manager.install(hooksBinaryURL: hooksBinaryURL)
         #expect(installed.featureFlagEnabled)
         #expect(installed.managedHooksPresent)
-        #expect(installed.manifest?.hookCommand == CodexHookInstaller.hookCommand(for: hooksBinaryURL.path))
+        #expect(installed.hooksBinaryURL?.path == managedHooksBinaryURL.standardizedFileURL.path)
+        #expect(installed.manifest?.hookCommand == CodexHookInstaller.hookCommand(for: managedHooksBinaryURL.path))
+        #expect(FileManager.default.isExecutableFile(atPath: managedHooksBinaryURL.path))
+        #expect(try Data(contentsOf: managedHooksBinaryURL) == Data("codex-hook".utf8))
         let hooksData = try Data(contentsOf: installed.hooksURL)
         let installedHooks = try jsonObject(from: hooksData)
         let installedStopGroups = (installedHooks["hooks"] as? [String: Any])?["Stop"] as? [[String: Any]]
         let installedManagedHook = installedStopGroups?
             .compactMap { $0["hooks"] as? [[String: Any]] }
             .flatMap { $0 }
-            .first(where: { $0["command"] as? String == CodexHookInstaller.hookCommand(for: hooksBinaryURL.path) })
+            .first(where: { $0["command"] as? String == CodexHookInstaller.hookCommand(for: managedHooksBinaryURL.path) })
         #expect(installedManagedHook?["statusMessage"] == nil)
 
-        let reloaded = try manager.status(hooksBinaryURL: hooksBinaryURL)
+        try FileManager.default.removeItem(at: hooksBinaryURL)
+
+        let reloaded = try manager.status()
         #expect(reloaded.managedHooksPresent)
         #expect(reloaded.featureFlagEnabled)
+        #expect(reloaded.hooksBinaryURL?.path == managedHooksBinaryURL.standardizedFileURL.path)
 
         let uninstalled = try manager.uninstall()
         #expect(!uninstalled.managedHooksPresent)
