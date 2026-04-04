@@ -110,6 +110,119 @@ struct AppModelSessionListTests {
     }
 
     @Test
+    func rolloutEventsDoNotPromoteRecoveredSessionsToAttachedDuringColdStart() {
+        let now = Date(timeIntervalSince1970: 2_000)
+        let model = AppModel()
+        model.isResolvingInitialLiveSessions = true
+        model.state = SessionState(
+            sessions: [
+                AgentSession(
+                    id: "recovered-session",
+                    title: "Codex · open-island",
+                    tool: .codex,
+                    origin: .live,
+                    attachmentState: .stale,
+                    phase: .running,
+                    summary: "Recovered from cache",
+                    updatedAt: now
+                ),
+            ]
+        )
+
+        model.applyTrackedEvent(
+            .activityUpdated(
+                SessionActivityUpdated(
+                    sessionID: "recovered-session",
+                    summary: "Reading recent rollout lines.",
+                    phase: .running,
+                    timestamp: now.addingTimeInterval(1)
+                )
+            ),
+            updateLastActionMessage: false,
+            ingress: .rollout
+        )
+
+        #expect(model.liveSessionCount == 0)
+        #expect(model.state.session(id: "recovered-session")?.attachmentState == .stale)
+        #expect(model.shouldShowSessionBootstrapPlaceholder)
+    }
+
+    @Test
+    func bridgeEventsStillPromoteSessionsToAttached() {
+        let now = Date(timeIntervalSince1970: 2_000)
+        let model = AppModel()
+        model.state = SessionState(
+            sessions: [
+                AgentSession(
+                    id: "live-session",
+                    title: "Codex · open-island",
+                    tool: .codex,
+                    origin: .live,
+                    attachmentState: .stale,
+                    phase: .running,
+                    summary: "Recovered from cache",
+                    updatedAt: now
+                ),
+            ]
+        )
+
+        model.applyTrackedEvent(
+            .activityUpdated(
+                SessionActivityUpdated(
+                    sessionID: "live-session",
+                    summary: "Bridge says the agent is running.",
+                    phase: .running,
+                    timestamp: now.addingTimeInterval(1)
+                )
+            ),
+            updateLastActionMessage: false,
+            ingress: .bridge
+        )
+
+        #expect(model.liveSessionCount == 1)
+        #expect(model.state.session(id: "live-session")?.attachmentState == .attached)
+    }
+
+    @Test
+    func rolloutCompletionDoesNotPresentNotificationDuringColdStart() {
+        let now = Date(timeIntervalSince1970: 2_000)
+        let model = AppModel()
+        model.isResolvingInitialLiveSessions = true
+        model.notchStatus = .closed
+        model.notchOpenReason = nil
+        model.state = SessionState(
+            sessions: [
+                AgentSession(
+                    id: "recovered-session",
+                    title: "Codex · open-island",
+                    tool: .codex,
+                    origin: .live,
+                    attachmentState: .stale,
+                    phase: .running,
+                    summary: "Recovered from cache",
+                    updatedAt: now
+                ),
+            ]
+        )
+
+        model.applyTrackedEvent(
+            .sessionCompleted(
+                SessionCompleted(
+                    sessionID: "recovered-session",
+                    summary: "Recovered rollout finished.",
+                    timestamp: now.addingTimeInterval(1)
+                )
+            ),
+            updateLastActionMessage: false,
+            ingress: .rollout
+        )
+
+        #expect(model.notchStatus == .closed)
+        #expect(model.notchOpenReason == nil)
+        #expect(model.islandSurface == .sessionList)
+    }
+
+    @Test
     func hoverOpenedSessionListAutoCollapsesOnPointerExit() {
         let model = AppModel()
         model.notchStatus = .opened

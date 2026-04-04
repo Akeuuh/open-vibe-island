@@ -16,6 +16,11 @@ enum NotchOpenReason: Equatable {
     case boot
 }
 
+enum TrackedEventIngress {
+    case bridge
+    case rollout
+}
+
 @MainActor
 @Observable
 final class AppModel {
@@ -167,7 +172,11 @@ final class AppModel {
 
         codexRolloutWatcher.eventHandler = { [weak self] event in
             Task { @MainActor [weak self] in
-                self?.applyTrackedEvent(event, updateLastActionMessage: false)
+                self?.applyTrackedEvent(
+                    event,
+                    updateLastActionMessage: false,
+                    ingress: .rollout
+                )
             }
         }
 
@@ -1082,13 +1091,16 @@ final class AppModel {
         }
     }
 
-    private func applyTrackedEvent(
+    func applyTrackedEvent(
         _ event: AgentEvent,
-        updateLastActionMessage: Bool = true
+        updateLastActionMessage: Bool = true,
+        ingress: TrackedEventIngress = .bridge
     ) {
         state.apply(event)
         reconcileIslandSurfaceAfterStateChange()
-        markSessionAttached(for: event)
+        if ingress == .bridge {
+            markSessionAttached(for: event)
+        }
         synchronizeSelection()
         refreshCodexRolloutTracking()
         refreshOverlayPlacementIfVisible()
@@ -1100,6 +1112,7 @@ final class AppModel {
         }
 
         if let surface = IslandSurface.notificationSurface(for: event),
+           (ingress == .bridge || !isResolvingInitialLiveSessions),
            notchStatus == .closed || notchOpenReason == .notification {
             presentNotificationSurface(surface)
         }
