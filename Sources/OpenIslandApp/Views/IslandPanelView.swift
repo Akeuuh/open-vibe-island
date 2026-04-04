@@ -964,7 +964,7 @@ private struct IslandSessionRow: View {
 }
 
 private struct IslandNotificationCard: View {
-    private static let completionReplyMaxHeight: CGFloat = 188
+    private static let completionReplyMaxHeight: CGFloat = 260
 
     let session: AgentSession
     let onApprove: (Bool) -> Void

@@ -22,7 +22,7 @@ final class OverlayPanelController {
     private static let structuredQuestionCardBaseHeight: CGFloat = 312
     private static let structuredQuestionCardPerQuestionHeight: CGFloat = 82
     private static let structuredQuestionCardMaximumHeight: CGFloat = 448
-    private static let completionCardHeight: CGFloat = 214
+    private static let completionCardHeight: CGFloat = 288
 
     private var panel: NotchPanel?
     private var eventMonitors = NotchEventMonitors()
