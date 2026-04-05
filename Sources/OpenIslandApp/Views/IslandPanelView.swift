@@ -413,36 +413,72 @@ struct IslandPanelView: View {
         model.islandSurface.sessionID
     }
 
+    /// Whether the panel was opened by a notification (show only actionable session + footer).
+    private var isNotificationMode: Bool {
+        model.notchOpenReason == .notification && actionableSessionID != nil
+    }
+
     private var sessionList: some View {
         TimelineView(.periodic(from: .now, by: 30)) { context in
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 4) {
-                    ForEach(displayedSessions) { session in
-                        IslandSessionRow(
-                            session: session,
-                            referenceDate: context.date,
-                            isActionable: session.id == actionableSessionID,
-                            useDrawingGroup: model.notchStatus == .opened,
-                            isInteractive: model.notchStatus == .opened,
-                            onApprove: { model.approvePermission(for: session.id, mode: $0) },
-                            onAnswer: { model.answerQuestion(for: session.id, answer: $0) },
-                            onJump: { model.jumpToSession(session) }
-                        )
-                    }
-
-                    if totalSessionCount > displayedSessions.count {
-                        Button {
-                            model.showsAllSessions.toggle()
-                        } label: {
-                            Text(model.showsAllSessions
-                                ? "收起列表"
-                                : "显示全部 \(totalSessionCount) 个会话")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.45))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
+                    if isNotificationMode {
+                        // Notification mode: only show the actionable session
+                        if let session = model.activeIslandCardSession {
+                            IslandSessionRow(
+                                session: session,
+                                referenceDate: context.date,
+                                isActionable: true,
+                                useDrawingGroup: model.notchStatus == .opened,
+                                isInteractive: model.notchStatus == .opened,
+                                onApprove: { model.approvePermission(for: session.id, mode: $0) },
+                                onAnswer: { model.answerQuestion(for: session.id, answer: $0) },
+                                onJump: { model.jumpToSession(session) }
+                            )
                         }
-                        .buttonStyle(.plain)
+
+                        // Footer to expand to full list
+                        if totalSessionCount > 1 {
+                            Button {
+                                model.expandNotificationToSessionList()
+                            } label: {
+                                Text("显示全部 \(totalSessionCount) 个会话")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.45))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    } else {
+                        // List mode: show all sessions
+                        ForEach(displayedSessions) { session in
+                            IslandSessionRow(
+                                session: session,
+                                referenceDate: context.date,
+                                isActionable: session.id == actionableSessionID,
+                                useDrawingGroup: model.notchStatus == .opened,
+                                isInteractive: model.notchStatus == .opened,
+                                onApprove: { model.approvePermission(for: session.id, mode: $0) },
+                                onAnswer: { model.answerQuestion(for: session.id, answer: $0) },
+                                onJump: { model.jumpToSession(session) }
+                            )
+                        }
+
+                        if totalSessionCount > displayedSessions.count {
+                            Button {
+                                model.showsAllSessions.toggle()
+                            } label: {
+                                Text(model.showsAllSessions
+                                    ? "收起列表"
+                                    : "显示全部 \(totalSessionCount) 个会话")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.45))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
             }

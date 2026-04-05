@@ -451,6 +451,19 @@ final class OverlayPanelController {
         }
 
         let actionableID = model.islandSurface.sessionID
+        let isNotificationMode = model.notchOpenReason == .notification && actionableID != nil
+
+        if isNotificationMode {
+            // Notification mode: only the actionable session + footer
+            guard let session = model.activeIslandCardSession else {
+                return Self.openedEmptyStateHeight
+            }
+            let rowHeight = session.estimatedIslandRowHeight(at: now)
+                + actionableBodyHeight(for: session, model: model)
+            let footerHeight: CGFloat = model.allSessions.count > 1 ? 28 : 0
+            return rowHeight + footerHeight + Self.openedContentVerticalInsets
+        }
+
         let rowHeights = visibleSessions.map { session -> CGFloat in
             if session.id == actionableID {
                 return session.estimatedIslandRowHeight(at: now)
@@ -502,7 +515,9 @@ final class OverlayPanelController {
         )
 
         let estimatedHeight = Self.completionCardChromeHeight + ceil(textSize.height)
-        return min(Self.completionCardMaxHeight, max(Self.completionCardMinHeight, estimatedHeight))
+        // Use a smaller minimum to avoid blank space when content is short
+        let minHeight: CGFloat = Self.completionCardChromeHeight + 20
+        return min(Self.completionCardMaxHeight, max(minHeight, estimatedHeight))
     }
 
     private func openedVisibleSessions(sessions: [AgentSession]) -> [AgentSession] {

@@ -624,6 +624,15 @@ final class AppModel {
     func showOverlay() { notchOpen(reason: .click, surface: .sessionList()) }
     func hideOverlay() { notchClose() }
 
+    /// Transition from notification mode (single session) to full session list.
+    func expandNotificationToSessionList() {
+        islandSurface = .sessionList()
+        notchOpenReason = .click
+        notificationAutoCollapseTask?.cancel()
+        notificationAutoCollapseTask = nil
+        refreshOverlayPlacementIfVisible()
+    }
+
     func refreshOverlayDisplayConfiguration() {
         overlayDisplayOptions = overlayPanelController.availableDisplayOptions()
 
