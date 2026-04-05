@@ -48,12 +48,83 @@ This app may install hooks for Claude Code or Codex, so you may see hook-related
 
 TBD
 
+### Feature Status
+
+#### Supported Code Agents
+
+| Agent | Status | Description |
+|---|---|---|
+| **Claude Code** | Supported | Hook integration, JSONL session discovery, status line bridge, usage tracking |
+| **Codex** | Supported | Full hook integration (SessionStart, UserPromptSubmit, Stop), usage tracking |
+| **Cursor** | Planned | — |
+| **Windsurf** | Planned | — |
+
+#### Supported Terminals
+
+| Terminal | Status | Description |
+|---|---|---|
+| **Terminal.app** | Full Support | Jump-back with TTY targeting |
+| **Ghostty** | Full Support | Jump-back with ID matching |
+| **cmux** | Full Support | Jump-back via Unix socket API |
+| **iTerm2** | Partial | AppleScript session targeting |
+| **Warp** | Planned | Fallback detection only |
+| **WezTerm** | Planned | Fallback detection only |
+
+#### Other Features
+
+| Feature | Status | Description |
+|---|---|---|
+| Notch / Top-bar overlay | Supported | Notch area on notch Macs, top-center bar on others |
+| Control center | Supported | Hook status, usage dashboard |
+| Settings | Supported | General, Display, Sound, Shortcuts, Lab, About |
+| Notification mode | Supported | Auto-height panel for permission requests and session events |
+| Notification sounds | Supported | Configurable system sounds, mute toggle |
+| i18n | Supported | English, Simplified Chinese |
+| Session discovery | Supported | Auto-discover from local transcripts, persist across launches |
+| Process discovery | Supported | Match active agents via `ps`/`lsof` |
+| DMG packaging | Supported | Signing, notarization, GitHub Actions release workflow |
+| Auto-update | Planned | — |
+
 ## Community
 
 The project is still at an early stage — you may encounter issues along the way. Join the WeChat group or Discord for faster feedback and higher resolution priority.
 Issues and pull requests are always welcome. We are also looking for additional maintainers — Open Island is just the beginning. Come join us:
 
 <img src="docs/images/wechat-group.jpg" alt="Open Island WeChat group QR code" width="360">
+
+### Report a Bug via Your Code Agent
+
+If you run into a problem, copy the prompt below into your code agent (Claude Code, Codex, etc.) and it will automatically collect environment info and create a well-structured issue for you.
+
+<details>
+<summary>Click to expand the prompt</summary>
+
+```
+I'm having an issue with Open Island (https://github.com/Octane0411/open-vibe-island).
+
+Please help me file a GitHub issue. Do the following:
+
+1. Collect my environment info:
+   - Run `sw_vers` to get macOS version
+   - Run `swift --version` to get Swift version
+   - Check if Open Island is running: `ps aux | grep -i "open.island\|OpenIslandApp" | grep -v grep`
+   - Get the app version: `defaults read ~/Applications/Open\ Island\ Dev.app/Contents/Info.plist CFBundleShortVersionString 2>/dev/null || echo "unknown"`
+   - Check which terminal I'm using
+
+2. Ask me to describe:
+   - What I expected to happen
+   - What actually happened
+   - Steps to reproduce
+
+3. Create the issue on GitHub using `gh issue create` with this format:
+   - Title: concise summary
+   - Body with sections: **Environment**, **Description**, **Steps to Reproduce**, **Expected vs Actual Behavior**
+   - Add label "bug" if applicable
+
+Repository: Octane0411/open-vibe-island
+```
+
+</details>
 
 ---
 

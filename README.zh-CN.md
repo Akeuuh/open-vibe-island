@@ -48,17 +48,87 @@
 
 待补充
 
+### 功能状态
+
+#### 支持的 Code Agents
+
+| Agent | 状态 | 说明 |
+|---|---|---|
+| **Claude Code** | 已支持 | Hook 集成、JSONL 会话发现、status line bridge、用量追踪 |
+| **Codex** | 已支持 | 完整 hook 集成（SessionStart、UserPromptSubmit、Stop）、用量追踪 |
+| **opencode** | 规划中 | — |
+| **gemini cli** | 规划中 | — |
+
+#### 支持的终端
+
+| 终端 | 状态 | 说明 |
+|---|---|---|
+| **Terminal.app** | 完整支持 | Jump-back，TTY 定位 |
+| **Ghostty** | 完整支持 | Jump-back，ID 匹配 |
+| **cmux** | 完整支持 | Jump-back，Unix socket API |
+| **iTerm2** | 部分支持 | AppleScript 会话定位 |
+| **Warp** | 规划中 | 仅降级检测 |
+| **WezTerm** | 规划中 | 仅降级检测 |
+
+#### 其他功能
+
+| 功能 | 状态 | 说明 |
+|---|---|---|
+| 刘海 / 顶部栏覆盖层 | 已支持 | 刘海 Mac 在刘海区域，其他 Mac 顶部居中栏 |
+| 控制中心 | 已支持 | Hook 状态、用量仪表盘 |
+| 设置 | 已支持 | 通用、显示、声音、快捷键、实验室、关于 |
+| 完成通知 | 已支持 | 已支持claude code, codex |
+| 权限通知 | 已支持 | 已支持claude code, codex |
+| askUserQuestion通知 | 已支持 | 已支持claude code |
+| 通知音效 | 已支持 | 可配置系统音效、静音切换 |
+| 国际化 | 已支持 | English、简体中文 |
+| 自动更新 | 规划中 | — |
+
 ## 社区
 
 目前项目还在早期阶段，在体验中可能会出现任何问题，加入微信群/discord以获得更快的反馈和更高的解决优先级
-同时欢迎任意 issue 和 pull request，我们也在寻找其他maintainer，open island只是个开始，欢迎加入微信群：
+
+同时欢迎任意 issue 和 pull request，我们也在寻找其他maintainer，open island只是个开始，微信群：
 
 <img src="docs/images/wechat-group.jpg" alt="Open Island 微信群二维码" width="360">
-  
+
+### 通过 Code Agent 提交 Bug
+
+遇到问题？把下面的 prompt 复制到你的 code agent（Claude Code、Codex 等）中，它会自动收集环境信息并帮你创建一个规范的 issue。
+
+<details>
+<summary>点击展开 prompt</summary>
+
+```
+我在使用 Open Island (https://github.com/Octane0411/open-vibe-island) 时遇到了问题。
+
+请帮我提交一个 GitHub issue，按以下步骤操作：
+
+1. 收集我的环境信息：
+   - 运行 `sw_vers` 获取 macOS 版本
+   - 运行 `swift --version` 获取 Swift 版本
+   - 检查 Open Island 是否在运行：`ps aux | grep -i "open.island\|OpenIslandApp" | grep -v grep`
+   - 获取 app 版本：`defaults read ~/Applications/Open\ Island\ Dev.app/Contents/Info.plist CFBundleShortVersionString 2>/dev/null || echo "unknown"`
+   - 检查我当前使用的终端
+
+2. 询问我：
+   - 期望的行为是什么
+   - 实际发生了什么
+   - 复现步骤
+
+3. 使用 `gh issue create` 在 GitHub 上创建 issue，格式如下：
+   - 标题：简洁的问题概述
+   - 正文包含以下部分：**环境信息**、**问题描述**、**复现步骤**、**期望行为 vs 实际行为**
+   - 如果是 bug 请添加 "bug" 标签
+
+仓库：Octane0411/open-vibe-island
+```
+
+</details>
+
 ## 路线图
 
 4.6 发布测试版
-
 
 ---
 
