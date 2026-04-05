@@ -12,6 +12,10 @@ This index is the repository map for humans and coding agents. Read these files 
 - [docs/worktree-workflow.md](./worktree-workflow.md) for the parallel worktree lifecycle
 - [docs/packaging.md](./packaging.md) for the current local app packaging, signing, and notarization path
 
+## Testing
+
+- [docs/manual-test-plan.md](./manual-test-plan.md) for the manual test checklist covering overlay, sessions, hooks, and jump targets
+
 ## Harness And Planning
 
 - [docs/exec-plans/README.md](./exec-plans/README.md) for the active and completed execution-plan convention

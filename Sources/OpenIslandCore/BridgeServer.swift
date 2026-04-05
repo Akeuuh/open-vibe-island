@@ -43,7 +43,12 @@ public final class BridgeServer: @unchecked Sendable {
     private var pendingClaudeInteractions: [String: PendingClaudeInteraction] = [:]
     /// Caches Agent tool description from preToolUse for use by the next subagentStart.
     private var pendingAgentDescriptions: [String: String] = [:]
-    private var state = SessionState()
+    private var stateSnapshot = SessionState()
+    /// Local working state: tracks sessions emitted by this server between
+    /// snapshot pushes from AppModel. This is NOT a duplicate of AppModel's
+    /// state — it only contains sessions created via bridge hooks and is
+    /// overwritten whenever AppModel pushes a fresh snapshot.
+    private var localState = SessionState()
 
     public init(
         socketURL: URL = BridgeSocketLocation.defaultURL
@@ -126,6 +131,15 @@ public final class BridgeServer: @unchecked Sendable {
             queue.sync {
                 stopLocked()
             }
+        }
+    }
+
+    /// Pushes the authoritative session state from AppModel so BridgeServer
+    /// can read session data without maintaining its own copy.
+    public func updateStateSnapshot(_ snapshot: SessionState) {
+        queue.sync {
+            stateSnapshot = snapshot
+            localState = snapshot
         }
     }
 
@@ -266,7 +280,7 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case let .requestQuestion(sessionID, prompt):
-            guard state.session(id: sessionID) != nil else {
+            guard hasSession(id: sessionID) else {
                 send(.response(.acknowledged), to: clientID)
                 return
             }
@@ -289,7 +303,7 @@ public final class BridgeServer: @unchecked Sendable {
                 return
             }
 
-            state.resolvePermission(sessionID: sessionID, resolution: resolution)
+            localState.resolvePermission(sessionID: sessionID, resolution: resolution)
             broadcast([.event(
                 resolution.isApproved
                     ? .activityUpdated(
@@ -654,7 +668,7 @@ public final class BridgeServer: @unchecked Sendable {
             synchronizeClaudeJumpTarget(for: payload)
             synchronizeClaudeMetadata(for: payload)
 
-            let currentPhase = state.session(id: payload.sessionID)?.phase ?? .completed
+            let currentPhase = localState.session(id: payload.sessionID)?.phase ?? .completed
             let notificationPhase: SessionPhase
             if payload.notificationType == "idle_prompt" {
                 notificationPhase = .completed
@@ -825,7 +839,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func ensureSessionExists(for payload: CodexHookPayload) {
-        guard state.session(id: payload.sessionID) == nil else {
+        guard !hasSession(id: payload.sessionID) else {
             return
         }
 
@@ -846,7 +860,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func synchronizeJumpTarget(for payload: CodexHookPayload) {
-        guard let existingSession = state.session(id: payload.sessionID) else {
+        guard let existingSession = localState.session(id: payload.sessionID) else {
             return
         }
 
@@ -874,7 +888,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func synchronizeCodexMetadata(for payload: CodexHookPayload) {
-        guard let existingSession = state.session(id: payload.sessionID) else {
+        guard let existingSession = localState.session(id: payload.sessionID) else {
             return
         }
 
@@ -903,7 +917,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func ensureClaudeSessionExists(for payload: ClaudeHookPayload) {
-        guard state.session(id: payload.sessionID) == nil else {
+        guard !hasSession(id: payload.sessionID) else {
             return
         }
 
@@ -925,7 +939,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func synchronizeClaudeJumpTarget(for payload: ClaudeHookPayload) {
-        guard let existingSession = state.session(id: payload.sessionID) else {
+        guard let existingSession = localState.session(id: payload.sessionID) else {
             return
         }
 
@@ -957,7 +971,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func synchronizeClaudeMetadata(for payload: ClaudeHookPayload) {
-        guard let existingSession = state.session(id: payload.sessionID) else {
+        guard let existingSession = localState.session(id: payload.sessionID) else {
             return
         }
 
@@ -1057,7 +1071,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func addSubagent(_ subagent: ClaudeSubagentInfo, toSession sessionID: String) {
-        guard var metadata = state.session(id: sessionID)?.claudeMetadata else {
+        guard var metadata = localState.session(id: sessionID)?.claudeMetadata else {
             return
         }
 
@@ -1076,7 +1090,7 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func removeSubagent(agentID: String, fromSession sessionID: String) {
-        guard var metadata = state.session(id: sessionID)?.claudeMetadata else {
+        guard var metadata = localState.session(id: sessionID)?.claudeMetadata else {
             return
         }
 
@@ -1098,7 +1112,7 @@ public final class BridgeServer: @unchecked Sendable {
         toolName: String,
         sessionID: String
     ) {
-        guard var metadata = state.session(id: sessionID)?.claudeMetadata else {
+        guard var metadata = localState.session(id: sessionID)?.claudeMetadata else {
             return
         }
 
@@ -1358,8 +1372,12 @@ public final class BridgeServer: @unchecked Sendable {
     }
 
     private func emit(_ event: AgentEvent) {
-        state.apply(event)
+        localState.apply(event)
         broadcast([.event(event)])
+    }
+
+    private func hasSession(id: String) -> Bool {
+        localState.session(id: id) != nil || localState.session(id: id) != nil
     }
 
     private func send(_ envelope: BridgeEnvelope, to clientID: UUID) {
