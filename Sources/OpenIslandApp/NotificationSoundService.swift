@@ -5,7 +5,7 @@ import AppKit
 struct NotificationSoundService {
     private static let soundsDirectory = "/System/Library/Sounds"
     private static let defaultsKey = "notification.sound.name"
-    static let defaultSoundName = "Blow"
+    static let defaultSoundName = "Bottle"
 
     /// Returns the list of available system sound names (without file extension).
     static func availableSounds() -> [String] {
