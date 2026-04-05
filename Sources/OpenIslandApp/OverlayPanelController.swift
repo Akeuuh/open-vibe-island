@@ -18,7 +18,7 @@ final class OverlayPanelController {
     private static let openedContentVerticalInsets: CGFloat = 8
     private static let openedEmptyStateHeight: CGFloat = 108
     private static let approvalCardHeight: CGFloat = 288
-    private static let questionCardHeight: CGFloat = 200
+    private static let questionCardHeight: CGFloat = 148
     // Completion card chrome breakdown (everything except the scrollable text):
     // openedContent vertical padding: 24, card container padding: 28,
     // card VStack spacing: 14, card header (title+prompt): ~50,

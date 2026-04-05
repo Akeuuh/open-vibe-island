@@ -997,6 +997,8 @@ private struct IslandNotificationCard: View {
     let onAnswer: (QuestionPromptResponse) -> Void
     let onJump: () -> Void
 
+    @State private var isHovered = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 14) {
@@ -1038,12 +1040,20 @@ private struct IslandNotificationCard: View {
         .padding(.vertical, 14)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.black)
+                .fill(isHovered ? Color.white.opacity(0.06) : Color.black)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(statusTint.opacity(0.28))
+                .strokeBorder(statusTint.opacity(isHovered ? 0.45 : 0.28))
         )
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+        .onTapGesture {
+            onJump()
+        }
     }
 
     @ViewBuilder
