@@ -1,93 +1,82 @@
+import Combine
 import Foundation
+import Sparkle
 
-/// Checks GitHub releases for available app updates.
+/// Wraps Sparkle's `SPUUpdater` to provide observable update state for SwiftUI.
+///
+/// Sparkle handles the full lifecycle: checking for updates, downloading,
+/// extracting, replacing the app bundle, and relaunching.
+/// This wrapper simply exposes the current state so the UI can react.
 @MainActor
 @Observable
-final class UpdateChecker {
+final class UpdateChecker: NSObject {
     static let releasesURL = URL(string: "https://github.com/Octane0411/open-vibe-island/releases")!
-    private static let checkInterval: TimeInterval = 1 * 60 * 60 // 1 hour
 
-    private static let apiEndpoint = "https://api.github.com/repos/Octane0411/open-vibe-island/releases/latest"
+    private(set) var canCheckForUpdates = false
+    private(set) var hasUpdate = false
+    private(set) var latestVersion: String?
 
-    enum State: Equatable {
-        case idle
-        case checking
-        case updateAvailable(version: String)
-        case upToDate
-        case failed
+    @ObservationIgnored
+    private var updaterController: SPUStandardUpdaterController!
+
+    @ObservationIgnored
+    private var cancellable: AnyCancellable?
+
+    override init() {
+        super.init()
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: false,
+            updaterDelegate: self,
+            userDriverDelegate: nil
+        )
     }
 
-    private(set) var state: State = .idle
+    /// Start Sparkle's automatic update checking schedule.
+    /// Call once after app launch.
+    func startIfNeeded() {
+        let updater = updaterController.updater
+        updater.automaticallyChecksForUpdates = true
+        updater.updateCheckInterval = 60 * 60 // 1 hour
+        updater.automaticallyDownloadsUpdates = false
 
-    var hasUpdate: Bool {
-        if case .updateAvailable = state { return true }
-        return false
-    }
-
-    var latestVersion: String? {
-        if case .updateAvailable(let v) = state { return v }
-        return nil
-    }
-
-    private var lastCheckDate: Date?
-
-    func checkIfNeeded() {
-        if let last = lastCheckDate,
-           Date().timeIntervalSince(last) < Self.checkInterval {
-            return
+        do {
+            try updater.start()
+        } catch {
+            print("[UpdateChecker] Failed to start Sparkle updater: \(error)")
         }
-        check()
-    }
 
-    func check() {
-        guard state != .checking else { return }
-        state = .checking
-
-        Task {
-            do {
-                let remoteVersion = try await Self.fetchLatestVersion()
-                let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
-                let hasNewer = Self.isVersionNewer(remoteVersion, than: currentVersion)
-
-                lastCheckDate = Date()
-                state = hasNewer ? .updateAvailable(version: remoteVersion) : .upToDate
-            } catch {
-                state = .failed
+        cancellable = updater.publisher(for: \.canCheckForUpdates)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] value in
+                self?.canCheckForUpdates = value
             }
+    }
+
+    /// Manually trigger an update check (from Settings UI).
+    func checkForUpdates() {
+        updaterController.checkForUpdates(nil)
+    }
+}
+
+// MARK: - SPUUpdaterDelegate
+
+extension UpdateChecker: SPUUpdaterDelegate {
+    nonisolated func allowedChannels(for updater: SPUUpdater) -> Set<String> {
+        Set()
+    }
+
+    nonisolated func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+        let version = item.displayVersionString
+        Task { @MainActor in
+            self.hasUpdate = true
+            self.latestVersion = version
         }
     }
 
-    private static func fetchLatestVersion() async throws -> String {
-        guard let url = URL(string: apiEndpoint) else {
-            throw URLError(.badURL)
+    nonisolated func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: any Error) {
+        Task { @MainActor in
+            self.hasUpdate = false
+            self.latestVersion = nil
         }
-        var request = URLRequest(url: url)
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = 15
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
-        }
-
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let tagName = json?["tag_name"] as? String else {
-            throw URLError(.cannotParseResponse)
-        }
-
-        return tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
-    }
-
-    private static func isVersionNewer(_ a: String, than b: String) -> Bool {
-        let partsA = a.split(separator: ".").compactMap { Int($0) }
-        let partsB = b.split(separator: ".").compactMap { Int($0) }
-        for i in 0..<max(partsA.count, partsB.count) {
-            let va = i < partsA.count ? partsA[i] : 0
-            let vb = i < partsB.count ? partsB[i] : 0
-            if va != vb { return va > vb }
-        }
-        return false
     }
 }

@@ -31,7 +31,7 @@ if [ "$skip_setup" = false ]; then
   "$setup_binary" install --hooks-binary "$hooks_binary"
 fi
 
-mkdir -p "$bundle_dir/Contents/MacOS" "$bundle_dir/Contents/Helpers" "$bundle_dir/Contents/Resources"
+mkdir -p "$bundle_dir/Contents/MacOS" "$bundle_dir/Contents/Helpers" "$bundle_dir/Contents/Resources" "$bundle_dir/Contents/Frameworks"
 cp "$app_binary" "$bundle_binary"
 cp "$hooks_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks"
 cp "$setup_binary" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
@@ -43,6 +43,13 @@ resource_bundle="$build_root/OpenIsland_OpenIslandApp.bundle"
 if [ -d "$resource_bundle" ]; then
     rm -rf "$bundle_dir/OpenIsland_OpenIslandApp.bundle"
     cp -R "$resource_bundle" "$bundle_dir/"
+fi
+
+# Copy Sparkle.framework for auto-update support.
+sparkle_framework="$repo_root/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+if [ -d "$sparkle_framework" ]; then
+    rm -rf "$bundle_dir/Contents/Frameworks/Sparkle.framework"
+    cp -R "$sparkle_framework" "$bundle_dir/Contents/Frameworks/"
 fi
 
 cat > "$plist_path" <<EOF
@@ -76,6 +83,10 @@ cat > "$plist_path" <<EOF
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/Octane0411/open-vibe-island/main/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>3IF8txq9RRNanzE2FNhyGRcwhslTucCcJHpTkpxcgBQ=</string>
 </dict>
 </plist>
 EOF

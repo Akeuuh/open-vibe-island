@@ -142,9 +142,11 @@ struct SettingsView: View {
             }
 
             if model.updateChecker.hasUpdate, let version = model.updateChecker.latestVersion {
-                UpdateBanner(version: version, lang: lang)
-                    .padding(.top, 8)
-                    .padding(.trailing, 16)
+                UpdateBanner(version: version, lang: lang) {
+                    model.updateChecker.checkForUpdates()
+                }
+                .padding(.top, 8)
+                .padding(.trailing, 16)
             }
         }
     }
@@ -300,6 +302,10 @@ struct AboutSettingsPane: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+            Button(lang.t("settings.about.checkForUpdates")) {
+                model.updateChecker.checkForUpdates()
+            }
+            .disabled(!model.updateChecker.canCheckForUpdates)
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -477,15 +483,16 @@ struct PlaceholderSettingsPane: View {
 struct UpdateBanner: View {
     let version: String
     let lang: LanguageManager
+    var onUpdate: () -> Void
 
     var body: some View {
-        Link(destination: UpdateChecker.releasesURL) {
+        Button(action: onUpdate) {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 13, weight: .semibold))
                 Text(lang.t("settings.update.available", version))
                     .font(.system(size: 12, weight: .medium))
-                Image(systemName: "arrow.up.right")
+                Image(systemName: "arrow.down.to.line")
                     .font(.system(size: 10, weight: .bold))
             }
             .foregroundStyle(.white)

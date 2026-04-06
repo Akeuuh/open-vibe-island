@@ -39,12 +39,20 @@ python3 "$brand_script"
 python3 "$dmg_bg_script"
 
 rm -rf "$bundle_dir" "$zip_path" "$dmg_path"
-mkdir -p "$bundle_dir/Contents/MacOS" "$bundle_dir/Contents/Helpers" "$bundle_dir/Contents/Resources"
+mkdir -p "$bundle_dir/Contents/MacOS" "$bundle_dir/Contents/Helpers" "$bundle_dir/Contents/Resources" "$bundle_dir/Contents/Frameworks"
 
 cp "$app_binary" "$bundle_dir/Contents/MacOS/OpenIslandApp"
 cp "$hooks_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks"
 cp "$setup_binary" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
 cp "$brand_icon" "$bundle_dir/Contents/Resources/OpenIsland.icns"
+
+# Copy Sparkle.framework for auto-update support.
+sparkle_framework="$repo_root/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+if [[ -d "$sparkle_framework" ]]; then
+    cp -R "$sparkle_framework" "$bundle_dir/Contents/Frameworks/"
+else
+    echo "WARNING: Sparkle.framework not found at $sparkle_framework — run 'swift package resolve' first." >&2
+fi
 
 # Copy SPM resource bundle — required by Bundle.module at runtime (localization etc.).
 # SPM's generated accessor looks for it at Bundle.main.bundleURL (the .app root),
@@ -94,6 +102,10 @@ cat > "$bundle_dir/Contents/Info.plist" <<EOF
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/Octane0411/open-vibe-island/main/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>${OPEN_ISLAND_EDDSA_PUBLIC_KEY:-3IF8txq9RRNanzE2FNhyGRcwhslTucCcJHpTkpxcgBQ=}</string>
 </dict>
 </plist>
 EOF

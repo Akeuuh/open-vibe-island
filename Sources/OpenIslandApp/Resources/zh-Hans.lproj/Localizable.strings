@@ -73,9 +73,10 @@
 
 /* Settings - About */
 "settings.about.version" = "版本 %@";
+"settings.about.checkForUpdates" = "检查更新…";
 
 /* Settings - Update */
-"settings.update.available" = "v%@ 可更新";
+"settings.update.available" = "v%@ 可更新 — 点击更新";
 
 /* Island Panel - Bootstrap */
 "island.checkingTerminals" = "正在检查打开的终端会话";

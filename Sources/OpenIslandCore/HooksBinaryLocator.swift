@@ -44,6 +44,30 @@ public enum ManagedHooksBinary {
         return resolvedDestinationURL
     }
 
+    /// Overwrites the installed hooks binary if the bundle source differs.
+    /// Returns `true` if the binary was updated.
+    @discardableResult
+    public static func updateIfNeeded(
+        from sourceURL: URL,
+        fileManager: FileManager = .default
+    ) throws -> Bool {
+        let installedURL = defaultURL(fileManager: fileManager)
+        guard fileManager.fileExists(atPath: installedURL.path) else {
+            return false
+        }
+
+        let sourceData = try Data(contentsOf: sourceURL)
+        let installedData = try Data(contentsOf: installedURL)
+        guard sourceData != installedData else {
+            return false
+        }
+
+        try fileManager.removeItem(at: installedURL)
+        try fileManager.copyItem(at: sourceURL, to: installedURL)
+        try fileManager.setAttributes([.posixPermissions: 0o755], ofItemAtPath: installedURL.path)
+        return true
+    }
+
     private static func installDirectory(fileManager: FileManager) -> URL {
         fileManager.homeDirectoryForCurrentUser
             .appendingPathComponent("Library", isDirectory: true)

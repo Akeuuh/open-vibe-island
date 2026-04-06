@@ -16,10 +16,20 @@ Follow [Semantic Versioning](https://semver.org/):
 2. **Build & package**:
    ```bash
    git checkout main && git pull
-   OPEN_ISLAND_VERSION=<version> zsh scripts/package-app.sh
+   OPEN_ISLAND_VERSION=<version> \
+   OPEN_ISLAND_EDDSA_PUBLIC_KEY="<your-public-key>" \
+   zsh scripts/package-app.sh
    ```
    This produces `output/package/Open Island.dmg` and `output/package/Open Island.zip`.
-3. **Create the release**:
+3. **Sign the update zip with EdDSA** (for Sparkle auto-update):
+   ```bash
+   .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework/Versions/B/bin/sign_update \
+     "output/package/Open Island.zip"
+   ```
+   Copy the `sparkle:edSignature` and `length` values for the appcast entry.
+4. **Update `appcast.xml`** in the repo root — add a new `<item>` entry with the version, download URL, EdDSA signature, and length. See the "Sparkle Appcast" section below.
+5. **Commit and push** the updated `appcast.xml` to `main`.
+6. **Create the release**:
    ```bash
    gh release create v<version> \
      "output/package/Open Island.dmg#Open.Island.dmg" \
@@ -28,7 +38,7 @@ Follow [Semantic Versioning](https://semver.org/):
      --title "Open Island v<version> — <Title>" \
      --notes-file release-notes.md
    ```
-4. **Verify**: open the release page and confirm assets are downloadable.
+7. **Verify**: open the release page and confirm assets are downloadable.
 
 ## Release Notes Format
 
@@ -93,6 +103,42 @@ Every release ships two artifacts:
 |------|---------|
 | `Open Island.dmg` | Styled disk image with drag-to-Applications |
 | `Open Island.zip` | Plain zip for automation / CI downloads |
+
+## Sparkle Appcast
+
+The file `appcast.xml` in the repo root is the Sparkle update feed. It is served via GitHub raw content at:
+
+```
+https://raw.githubusercontent.com/Octane0411/open-vibe-island/main/appcast.xml
+```
+
+Each release needs a new `<item>` entry. Template:
+
+```xml
+<item>
+    <title>Version X.Y.Z</title>
+    <sparkle:version>BUILD_NUMBER</sparkle:version>
+    <sparkle:shortVersionString>X.Y.Z</sparkle:shortVersionString>
+    <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+    <pubDate>Thu, 06 Apr 2026 00:00:00 +0000</pubDate>
+    <enclosure
+        url="https://github.com/Octane0411/open-vibe-island/releases/download/vX.Y.Z/Open.Island.zip"
+        type="application/octet-stream"
+        sparkle:edSignature="PASTE_SIGNATURE_HERE"
+        length="PASTE_LENGTH_HERE"
+    />
+</item>
+```
+
+### EdDSA Key Setup (one-time)
+
+Generate a key pair with Sparkle's tool:
+
+```bash
+.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework/Versions/B/bin/generate_keys
+```
+
+This stores the private key in your macOS Keychain and prints the public key. Save the public key — it goes into `OPEN_ISLAND_EDDSA_PUBLIC_KEY` env var during packaging and into `SUPublicEDKey` in Info.plist.
 
 ## Signing (future)
 

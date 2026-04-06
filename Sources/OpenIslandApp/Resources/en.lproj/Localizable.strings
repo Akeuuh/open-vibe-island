@@ -73,9 +73,10 @@
 
 /* Settings - About */
 "settings.about.version" = "Version %@";
+"settings.about.checkForUpdates" = "Check for Updates…";
 
 /* Settings - Update */
-"settings.update.available" = "v%@ Available";
+"settings.update.available" = "v%@ Available — Update";
 
 /* Island Panel - Bootstrap */
 "island.checkingTerminals" = "Checking open terminal sessions";
