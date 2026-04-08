@@ -11,6 +11,10 @@ struct PendingWatchEvent: Identifiable {
 final class WatchSessionManager: NSObject, ObservableObject {
     static let shared = WatchSessionManager()
 
+    private override init() {
+        super.init()
+    }
+
     @Published var pendingEvents: [PendingWatchEvent] = []
     @Published var isPhoneReachable: Bool = false
 

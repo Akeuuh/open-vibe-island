@@ -4,12 +4,11 @@ import WatchKit
 @main
 struct OpenIslandWatchApp: App {
     @WKApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var sessionManager = WatchSessionManager()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(sessionManager)
+                .environmentObject(WatchSessionManager.shared)
         }
     }
 }

@@ -24,6 +24,7 @@
 		WB000003 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = WA000003 /* HapticManager.swift */; };
 		WB000004 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WA000004 /* ContentView.swift */; };
 		WB000005 /* WatchMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000012 /* WatchMessage.swift */; };
+		WB000007 /* EventCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WA000005 /* EventCardView.swift */; };
 		WB000006 /* OpenIslandWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = WC000001 /* OpenIslandWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -70,6 +71,7 @@
 		WA000002 /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
 		WA000003 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		WA000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		WA000005 /* EventCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventCardView.swift; sourceTree = "<group>"; };
 		WC000001 /* OpenIslandWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenIslandWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -176,6 +178,7 @@
 				WA000002 /* WatchSessionManager.swift */,
 				WA000003 /* HapticManager.swift */,
 				WA000004 /* ContentView.swift */,
+				WA000005 /* EventCardView.swift */,
 			);
 			path = OpenIslandWatch;
 			sourceTree = "<group>";
@@ -302,6 +305,7 @@
 				WB000003 /* HapticManager.swift in Sources */,
 				WB000004 /* ContentView.swift in Sources */,
 				WB000005 /* WatchMessage.swift in Sources */,
+				WB000007 /* EventCardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
