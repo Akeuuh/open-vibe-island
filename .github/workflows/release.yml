@@ -197,7 +197,7 @@ jobs:
             --head "$branch" \
             --title "chore: update appcast.xml for v${{ steps.version.outputs.version }}" \
             --body "Automated appcast.xml update from release workflow."
-          gh pr merge "$branch" --merge --auto
+          gh pr merge "$branch" --merge --admin --delete-branch
 
       - name: Create GitHub Release
         env:
