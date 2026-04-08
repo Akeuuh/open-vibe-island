@@ -7,6 +7,7 @@ This index is the repository map for humans and coding agents. Read these files 
 - [README.md](../README.md) for the public project summary and local quick start
 - [AGENTS.md](../AGENTS.md) for the repository workflow, commit policy, and worktree rules
 - [docs/roadmap.md](./roadmap.md) for the project roadmap and contribution focus areas
+- [docs/roadmap.zh-CN.md](./roadmap.zh-CN.md) for the Chinese roadmap and contribution focus areas
 - [docs/product.md](./product.md) for the product scope, supported agents, and terminals
 - [docs/architecture.md](./architecture.md) for the runtime shape and transport boundaries
 - [docs/quality.md](./quality.md) for the current harness contract and verification expectations
@@ -45,4 +46,3 @@ This index is the repository map for humans and coding agents. Read these files 
 - [docs/island-position-investigation.md](./island-position-investigation.md) for notch and external-display placement work
 - [docs/notchi-integration.md](./notchi-integration.md) for integration notes related to Notchi
 - [docs/installed-app-bundle-analysis.md](./installed-app-bundle-analysis.md) for installed-app bundle observations
-

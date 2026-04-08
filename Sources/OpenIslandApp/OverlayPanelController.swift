@@ -397,18 +397,19 @@ final class OverlayPanelController {
     }
 
     private func panelShadowInsets(for model: AppModel?) -> (horizontal: CGFloat, bottom: CGFloat) {
-        switch model?.notchStatus {
-        case .opened, nil:
+        let usesOpenedInsets = model.map { $0.notchStatus == .opened || $0.isOverlayCloseTransitionPending } ?? true
+
+        if usesOpenedInsets {
             return (
                 horizontal: IslandChromeMetrics.openedShadowHorizontalInset,
                 bottom: IslandChromeMetrics.openedShadowBottomInset
             )
-        case .closed, .popping:
-            return (
-                horizontal: IslandChromeMetrics.closedShadowHorizontalInset,
-                bottom: IslandChromeMetrics.closedShadowBottomInset
-            )
         }
+
+        return (
+            horizontal: IslandChromeMetrics.closedShadowHorizontalInset,
+            bottom: IslandChromeMetrics.closedShadowBottomInset
+        )
     }
 
     private func closedPanelWidth(for model: AppModel, on screen: NSScreen) -> CGFloat {
