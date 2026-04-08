@@ -431,7 +431,7 @@ final class OverlayPanelController {
 
         let sideWidth = max(0, notchHeight - 12) + 10
         let digits = max(1, "\(model.liveSessionCount)".count)
-        let countBadgeWidth = CGFloat(18 + max(0, digits - 1) * 7)
+        let countBadgeWidth = CGFloat(26 + max(0, digits - 1) * 8)
         let hasAttention = spotlightSession?.phase.requiresAttention == true
         let leftWidth = sideWidth + 8 + (hasAttention ? 18 : 0)
         let rightWidth = max(sideWidth, countBadgeWidth)

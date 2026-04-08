@@ -153,7 +153,7 @@ struct IslandPanelView: View {
 
     private var countBadgeWidth: CGFloat {
         let digits = max(1, "\(model.liveSessionCount)".count)
-        return CGFloat(18 + max(0, digits - 1) * 7)
+        return CGFloat(26 + max(0, digits - 1) * 8)
     }
 
     private var expansionWidth: CGFloat {
