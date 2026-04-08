@@ -487,13 +487,10 @@ struct IslandPanelView: View {
                         }
                     }
             } else {
-                // List mode: scrollable
-                ScrollView(.vertical) {
+                // List mode: auto-height (fits content, scrolls only when exceeding max)
+                AutoHeightScrollView(maxHeight: Self.maxSessionListHeight) {
                     sessionListContent(context: context)
                 }
-                .scrollIndicators(.automatic, axes: .vertical)
-                .scrollContentBackground(.hidden)
-                .frame(maxHeight: Self.maxSessionListHeight)
                 .padding(.vertical, 2)
             }
         }
