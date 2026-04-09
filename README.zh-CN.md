@@ -25,6 +25,18 @@
 
 ---
 
+## 📰 最新动态
+
+> Open Island 正在快速迭代，以下是最近的更新。
+
+- **2026-04-08** 🔐 **v1.0.0 → v1.0.7** 发布 — 首个签名公证版本。新增多 Agent 支持（**Qoder**、**Factory**、**CodeBuddy**）、Intel Mac 支持、审批 UI、Sparkle 自动更新、动画优化。
+
+- **2026-04-06** 🧩 **OpenCode** 插件集成和 **iTerm2** 跳转支持上线。
+
+- **2026-04-05** 🚀 **v0.1.1** — 首次公开发布，支持 **Claude Code** & **Codex**，集成 **Terminal.app** & **Ghostty**。
+
+---
+
 ## Human Parts
 
 这部分内容是给人类阅读的。

@@ -25,6 +25,18 @@
 
 ---
 
+## 📰 News
+
+> Open Island is evolving fast — here's what's new.
+
+- **2026-04-08** 🔐 **v1.0.0 → v1.0.7** released — First signed & notarized build. Added multi-agent support (**Qoder**, **Factory**, **CodeBuddy**), Intel Mac support, approval UI, Sparkle auto-update, and animation polish.
+
+- **2026-04-06** 🧩 **OpenCode** plugin integration and **iTerm2** jump-back support landed.
+
+- **2026-04-05** 🚀 **v0.1.1** — First public release with **Claude Code** & **Codex** support, **Terminal.app** & **Ghostty** integration.
+
+---
+
 ## Human Parts
 
 This section is written for humans.
