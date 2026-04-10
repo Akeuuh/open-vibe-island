@@ -6,7 +6,7 @@ public enum GeminiHookInstallationStatus: Equatable, Sendable {
     case geminiNotFound
 }
 
-public final class GeminiHookInstallationManager: Sendable {
+public final class GeminiHookInstallationManager: @unchecked Sendable {
     private let geminiDirectory: URL
 
     public init(
@@ -20,14 +20,17 @@ public final class GeminiHookInstallationManager: Sendable {
         geminiDirectory.appendingPathComponent("settings.json")
     }
 
-    public func checkStatus(hooksBinaryURL: URL) async -> GeminiHookInstallationStatus {
+    public func status(hooksBinaryURL: URL? = nil) throws -> GeminiHookInstallationStatus {
         guard FileManager.default.fileExists(atPath: geminiDirectory.path) else {
             return .geminiNotFound
         }
         guard let data = try? Data(contentsOf: settingsURL) else {
             return .notInstalled
         }
-        let hookCommand = GeminiHookInstaller.hookCommand(for: hooksBinaryURL.path)
+        guard let binaryURL = hooksBinaryURL else {
+            return .notInstalled
+        }
+        let hookCommand = GeminiHookInstaller.hookCommand(for: binaryURL.path)
         guard let mutation = try? GeminiHookInstaller.uninstallSettingsJSON(
             existingData: data,
             hookCommand: hookCommand
@@ -39,7 +42,8 @@ public final class GeminiHookInstallationManager: Sendable {
             : .notInstalled
     }
 
-    public func install(hooksBinaryURL: URL) async throws -> GeminiHookInstallationStatus {
+    @discardableResult
+    public func install(hooksBinaryURL: URL) throws -> GeminiHookInstallationStatus {
         try FileManager.default.createDirectory(at: geminiDirectory, withIntermediateDirectories: true)
         let existingData = try? Data(contentsOf: settingsURL)
         let hookCommand = GeminiHookInstaller.hookCommand(for: hooksBinaryURL.path)
@@ -53,7 +57,8 @@ public final class GeminiHookInstallationManager: Sendable {
         return .installed(hookCommand: hookCommand)
     }
 
-    public func uninstall(hooksBinaryURL: URL) async throws -> GeminiHookInstallationStatus {
+    @discardableResult
+    public func uninstall(hooksBinaryURL: URL) throws -> GeminiHookInstallationStatus {
         let existingData = try? Data(contentsOf: settingsURL)
         let hookCommand = GeminiHookInstaller.hookCommand(for: hooksBinaryURL.path)
         let mutation = try GeminiHookInstaller.uninstallSettingsJSON(

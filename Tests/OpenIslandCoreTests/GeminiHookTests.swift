@@ -113,10 +113,10 @@ struct GeminiHookTests {
         #expect(entries.count == 2)
     }
 
-    @Test func installationManagerReturnsGeminiNotFoundForMissingDirectory() async {
+    @Test func installationManagerReturnsGeminiNotFoundForMissingDirectory() throws {
         let tempURL = URL(fileURLWithPath: "/tmp/gemini-test-nonexistent-\(UUID().uuidString)")
         let manager = GeminiHookInstallationManager(geminiDirectory: tempURL)
-        let status = await manager.checkStatus(
+        let status = try manager.status(
             hooksBinaryURL: URL(fileURLWithPath: "/usr/local/bin/open-island-hooks")
         )
         #expect(status == .geminiNotFound)
