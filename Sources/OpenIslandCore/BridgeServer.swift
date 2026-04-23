@@ -1747,13 +1747,18 @@ public final class BridgeServer: @unchecked Sendable {
             )
         )
 
-        let structuredAnswers: [[String]] = response.answers
-            .keys
-            .sorted()
-            .map { key in
-                let value = response.answers[key] ?? ""
-                return value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-            }
+        let orderedKeys: [String]
+        if case let .question(payload) = pendingInteraction.kind,
+           let questions = payload.questions, !questions.isEmpty {
+            orderedKeys = questions.map { $0.header }
+        } else {
+            orderedKeys = response.answers.keys.sorted()
+        }
+
+        let structuredAnswers: [[String]] = orderedKeys.compactMap { key in
+            guard let value = response.answers[key] else { return nil }
+            return value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        }
 
         if !structuredAnswers.isEmpty {
             send(

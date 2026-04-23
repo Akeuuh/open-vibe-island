@@ -1271,6 +1271,8 @@ final class AppModel {
 
         let isActionable = session.phase == .waitingForApproval || session.phase == .waitingForAnswer
         if isActionable {
+            notificationPresentationTask?.cancel()
+            notificationPresentationTask = nil
             presentNotificationSurface(surface)
             return
         }
