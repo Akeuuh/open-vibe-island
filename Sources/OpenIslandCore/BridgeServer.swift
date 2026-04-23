@@ -1046,15 +1046,40 @@ public final class BridgeServer: @unchecked Sendable {
             synchronizeOpenCodeJumpTarget(for: payload)
             synchronizeOpenCodeMetadata(for: payload)
 
-            let questionTitle = payload.questionText ?? "OpenCode has a question for you."
+            let prompt: QuestionPrompt
+            if let rawQuestions = payload.questions, !rawQuestions.isEmpty {
+                let items = rawQuestions.map { q in
+                    var resolvedOptions = q.options.map { o in
+                        QuestionOption(label: o.label, description: o.description)
+                    }
+                    // Mirror Claude behavior: add a freeform "Other" option
+                    resolvedOptions.append(
+                        QuestionOption(label: "Other", description: "", allowsFreeform: true)
+                    )
+                    return QuestionPromptItem(
+                        question: q.question,
+                        header: q.header,
+                        options: resolvedOptions,
+                        multiSelect: q.multiple
+                    )
+                }
+                let title: String
+                if items.count == 1, let first = items.first {
+                    title = first.question
+                } else {
+                    title = "OpenCode has \(items.count) questions for you."
+                }
+                prompt = QuestionPrompt(title: title, questions: items)
+            } else {
+                let questionTitle = payload.questionText ?? "OpenCode has a question for you."
+                prompt = QuestionPrompt(title: questionTitle, options: [])
+            }
+
             emit(
                 .questionAsked(
                     QuestionAsked(
                         sessionID: payload.sessionID,
-                        prompt: QuestionPrompt(
-                            title: questionTitle,
-                            options: []
-                        ),
+                        prompt: prompt,
                         timestamp: .now
                     )
                 )
@@ -1722,10 +1747,25 @@ public final class BridgeServer: @unchecked Sendable {
             )
         )
 
-        send(
-            .response(.openCodeHookDirective(.answer(text: answerText))),
-            to: pendingInteraction.clientID
-        )
+        let structuredAnswers: [[String]] = response.answers
+            .keys
+            .sorted()
+            .map { key in
+                let value = response.answers[key] ?? ""
+                return value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            }
+
+        if !structuredAnswers.isEmpty {
+            send(
+                .response(.openCodeHookDirective(.structuredAnswer(answers: structuredAnswers))),
+                to: pendingInteraction.clientID
+            )
+        } else {
+            send(
+                .response(.openCodeHookDirective(.answer(text: answerText))),
+                to: pendingInteraction.clientID
+            )
+        }
     }
 
     private func clearStaleClaudeInteractionIfNeeded(for sessionID: String) {
