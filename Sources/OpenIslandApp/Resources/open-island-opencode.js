@@ -135,6 +135,8 @@ export default async ({ client, serverUrl }) => {
   const msgRoles = new Map();
   const sessionCwd = new Map();
   const sessions = new Map();
+  const busySessions = new Set();
+  const subagentSessions = new Set();
 
   function getSession(sid) {
     if (!sessions.has(sid)) sessions.set(sid, { lastAssistantText: "" });
@@ -149,13 +151,18 @@ export default async ({ client, serverUrl }) => {
     if (t === "session.created" && p.info) {
       const cwd = p.info.directory || "";
       sessionCwd.set(p.info.id, cwd);
-      return makePayload("SessionStart", p.info.id, cwd);
+      if (busySessions.size > 0) subagentSessions.add(p.info.id);
+      return makePayload("SessionStart", p.info.id, cwd, {
+        ...(subagentSessions.has(p.info.id) ? { is_subagent: true } : {}),
+      });
     }
 
     // session.deleted
     if (t === "session.deleted" && p.info) {
       sessions.delete(p.info.id);
       sessionCwd.delete(p.info.id);
+      busySessions.delete(p.info.id);
+      subagentSessions.delete(p.info.id);
       return makePayload("SessionEnd", p.info.id, sessionCwd.get(p.info.id));
     }
 
@@ -173,10 +180,17 @@ export default async ({ client, serverUrl }) => {
     // session.status → idle = Stop (busy is ignored; session creation
     // comes from session.created or ensureOpenCodeSessionExists on first event)
     if (t === "session.status" && p.sessionID) {
+      if (p.status?.type === "busy") {
+        busySessions.add(p.sessionID);
+        return null;
+      }
       if (p.status?.type === "idle") {
+        busySessions.delete(p.sessionID);
         const s = getSession(p.sessionID);
+        const isSubagent = subagentSessions.has(p.sessionID);
         return makePayload("Stop", p.sessionID, sessionCwd.get(p.sessionID), {
           last_assistant_message: s.lastAssistantText || undefined,
+          ...(isSubagent ? { is_subagent: true } : {}),
         });
       }
       return null;
