@@ -30,6 +30,7 @@ public struct OpenCodeHookPayload: Equatable, Codable, Sendable {
     public var terminalSessionID: String?
     public var terminalTTY: String?
     public var terminalTitle: String?
+    public var isSubagent: Bool?
 
     private enum CodingKeys: String, CodingKey {
         case hookEventName = "hook_event_name"
@@ -50,6 +51,7 @@ public struct OpenCodeHookPayload: Equatable, Codable, Sendable {
         case terminalSessionID = "terminal_session_id"
         case terminalTTY = "terminal_tty"
         case terminalTitle = "terminal_title"
+        case isSubagent = "is_subagent"
     }
 
     public init(
@@ -70,7 +72,8 @@ public struct OpenCodeHookPayload: Equatable, Codable, Sendable {
         terminalApp: String? = nil,
         terminalSessionID: String? = nil,
         terminalTTY: String? = nil,
-        terminalTitle: String? = nil
+        terminalTitle: String? = nil,
+        isSubagent: Bool? = nil
     ) {
         self.hookEventName = hookEventName
         self.sessionID = sessionID
@@ -90,6 +93,7 @@ public struct OpenCodeHookPayload: Equatable, Codable, Sendable {
         self.terminalSessionID = terminalSessionID
         self.terminalTTY = terminalTTY
         self.terminalTitle = terminalTitle
+        self.isSubagent = isSubagent
     }
 }
 
