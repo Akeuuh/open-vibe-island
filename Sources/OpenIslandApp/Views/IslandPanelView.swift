@@ -1659,7 +1659,7 @@ private struct StructuredQuestionPromptView: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 if isStepper {
-                    if currentStep < structuredQuestions.count {
+                    if structuredQuestions.indices.contains(currentStep) {
                         questionRow(structuredQuestions[currentStep])
                             .id(currentStep)
                             .transition(.asymmetric(
@@ -1723,7 +1723,7 @@ private struct StructuredQuestionPromptView: View {
                 Button {
                     stepDirection = false
                     withAnimation(.easeInOut(duration: 0.2)) {
-                        currentStep -= 1
+                        currentStep = max(0, currentStep - 1)
                     }
                 } label: {
                     HStack(spacing: 4) {
@@ -1745,7 +1745,7 @@ private struct StructuredQuestionPromptView: View {
                 Button {
                     stepDirection = true
                     withAnimation(.easeInOut(duration: 0.2)) {
-                        currentStep += 1
+                        currentStep = min(max(0, structuredQuestions.count - 1), currentStep + 1)
                     }
                 } label: {
                     HStack(spacing: 4) {
