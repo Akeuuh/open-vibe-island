@@ -1288,6 +1288,8 @@ final class AppModel {
         }
 
         guard suppressFrontmostNotifications else {
+            notificationPresentationTask?.cancel()
+            notificationPresentationTask = nil
             presentNotificationSurface(surface)
             return
         }
