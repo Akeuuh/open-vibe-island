@@ -1293,12 +1293,6 @@ final class AppModel {
         }
 
         let isActionable = session.phase == .waitingForApproval || session.phase == .waitingForAnswer
-        if isActionable {
-            notificationPresentationTask?.cancel()
-            notificationPresentationTask = nil
-            presentNotificationSurface(surface)
-            return
-        }
 
         notificationPresentationTask?.cancel()
         notificationPresentationTask = Task { @MainActor [weak self] in
@@ -1307,10 +1301,18 @@ final class AppModel {
             }
 
             let shouldSuppress = await self.isNotificationSessionAlreadyFrontmost(session)
-            guard !Task.isCancelled,
-                  !shouldSuppress,
-                  self.notificationSurfaceIsEligibleForPresentation(surface, ingress: ingress) else {
+            guard !Task.isCancelled, !shouldSuppress else {
                 return
+            }
+
+            // Actionable sessions (permission/question) skip the post-await
+            // re-eligibility check: the session phase can change from
+            // waitingForApproval/waitingForAnswer to running while the
+            // async frontmost probe runs, causing a false dismissal.
+            if !isActionable {
+                guard self.notificationSurfaceIsEligibleForPresentation(surface, ingress: ingress) else {
+                    return
+                }
             }
 
             self.presentNotificationSurface(surface)
